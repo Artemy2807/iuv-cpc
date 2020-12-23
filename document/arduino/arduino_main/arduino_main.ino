@@ -4,14 +4,14 @@
 
 #ifdef ENABLE_ROS
 #include <ros.h>
-#include <std_msgs/Float64.h>
-#include <std_msgs/Float64MultiArray.h>
+#include <std_msgs/Float32.h>
+#include <ackermann_msgs/AckermannDrive.h>
 #endif
 #include <Servo.h>
 
 // Параметры ROS
-#define SPEED_TOPIC "mobile/speed"
-#define STEERING_TOPIC "mobile/cmd_vel"
+#define WHEEL_TOPIC "mobile/wheel_degrees"
+#define STEERING_TOPIC "mobile/cmd_drive"
 // Пины подключения
 #define MOTOR_PWM   5
 #define MOTOR_A1    7
