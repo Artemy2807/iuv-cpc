@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<launch>
+    <rosparam file="$(find mobile)/config/controller.yaml" command="load"/>
+
+	<node pkg="mobile" type="hardware_node" name="robo_hardware" output="screen">
+	</node>
+
+    <node pkg="controller_manager" type="spawner" name="controller_manager" output="screen" 
+          args="
+                /mobile/mobile_base_controller
+                /mobile/joints_update">
+    </node>
+
+    <node pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py" name="teleop_twist_keyboard">
+    </node>
+</launch>

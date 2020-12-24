@@ -1,4 +1,8 @@
 mobile:
+    joints_update:
+        type: "joint_state_controller/JointStateController"
+        publish_rate: 50.0
+
     mobile_base_controller:
         # Тип контроллера
         type: "ackermann_steering_controller/AckermannSteeringController"
