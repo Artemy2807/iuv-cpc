@@ -1,24 +1,15 @@
 // Параметры отладки программы
-#define ENABLE_ROS
 #define DEBUG_ENCODER
-
-#ifdef ENABLE_ROS
-#include <ros.h>
-#include <std_msgs/Float32.h>
-#include <ackermann_msgs/AckermannDrive.h>
-#endif
+#include <Wire.h>
 #include <Servo.h>
 
-// Параметры ROS
-#define WHEEL_TOPIC "mobile/wheel_degrees"
-#define STEERING_TOPIC "mobile/cmd_drive"
 // Пины подключения
-#define MOTOR_PWM   5
-#define MOTOR_A1    7
-#define MOTOR_B1    8
-#define SERVO_PIN   10
+#define MOTOR_PWM         5
+#define MOTOR_A1          7
+#define MOTOR_B1          8
+#define SERVO_PIN         10
 // Параметры машинки
-#define TICK_FOR_M  55.0
+#define TICK_REVOLUTION   55.0
 
 class Motor {
 private:
@@ -80,16 +71,17 @@ public:
   bool get_direction() { return direction_; }
 };
 
+struct Regulator {
+  int output = 0, output_old = 0;
+  int input = 0, set_point = 0;
+  float integral = 0;
+  float kp = 60.0, 
+      ki = 120.0;
+};
+
+void receive_data(int bytes);
+void request_data();
 void encoder_update();
-
-#ifdef ENABLE_ROS
-ros::NodeHandle nh;
-ros::Subscriber<std_msgs::Float64MultiArray> steering_sub(STEERING_TOPIC, feedback);
-std_msgs::Float64 speed_msg;
-ros::Publisher speed_pub(SPEED_TOPIC, &speed_msg);
-
-void feedback(const std_msgs::Float64MultiArray& cmd);
-#endif
 
 #ifdef DEBUG_ENCODER
 void parsing();
@@ -97,23 +89,14 @@ void parsing();
 
 Servo servo;
 Motor motor(MOTOR_PWM, MOTOR_A1, MOTOR_B1);
-int old_turn = 90;
-int regulator = 0, regulator_old = 0;
-float speed_set = 0.0, speed_real = 0;
-float kp = 60.0, 
-      ki = 120.0;
-float integral = 0;
+int turn = 90, old_turn = 90;
+Regulator reg;
 unsigned long time = 0;
 volatile unsigned long encoder_pulse = 0,
-                      encoder_pulse_old = 0;
+                      encoder_pulse_old = 0,
+                      encoder_pusle_old_wire = 0;
 
 void setup() {
-#ifdef ENABLE_ROS
-  nh.initNode();
-  nh.advertise(speed_pub);
-  nh.subscribe(steering_sub);
-#endif
-
 #ifdef DEBUG_ENCODER
   // Для плоттера
   Serial.begin(115200);
@@ -121,79 +104,67 @@ void setup() {
   Serial.println("setpoint, real, regulator");
 #endif
 
+  Wire.begin(8);
+  // Регистрирует функцию, вызываемую, когда ведомое устройство получает передачу от ведущего
+  Wire.onReceive(receive_data);
+  // Регистрирует функцию, вызываемую, когда ведущее устройство получает передачу от ведомого
+  Wire.onRequest(request_data);
+
   attachInterrupt(1, encoder_update, FALLING);
 
   motor.direction(true);
 
   servo.attach(SERVO_PIN);
-  servo.write(old_turn);
+  servo.write(turn);
 
   time = millis();
 }
 
 void loop() {
+  // Угол поворота передних колёс
+  if(turn != old_turn) {
+    servo.write(turn);
+    old_turn = turn;
+  }
+  
   if((millis() - time) >= 300) {
-    // Расчёт скорости движения модели
-    float denc = encoder_pulse - encoder_pulse_old;
+    // Расчёт ШИМ для регулятора мотора
+    reg.input = (360U * 1000U * (encoder_pulse - encoder_pulse_old)) / (TICK_REVOLUTION * (millis() - time));
     encoder_pulse_old = encoder_pulse;
-
-    speed_real = (denc / TICK_FOR_M) / 0.1;
-
-#ifdef ENABLE_ROS
-    speed_msg.data = speed_real;
-#endif
     
+    reg.output_old = reg.output;
+    if(reg.input != 0) {
+      // ПИ регулятор
+      float error = reg.input - reg.set_point;
+      reg.integral += error * reg.ki;
+      reg.integral = (reg.integral > 200 ? 200 : reg.integral);
+      reg.output = constrain((error * reg.kp + reg.integral), -255, 255);
+      reg.output = (reg.output + reg.output_old) * 0.5;
+    }else reg.output = 0;
+
     // Установить направление движения
-    bool new_direction = (speed_set >= 0.0);
+    bool new_direction = (reg.output >= 0);
     if(motor.get_direction() != new_direction)
       motor.direction(new_direction);
 
-    // Расчёт ШИМ для регулятора мотора
-    regulator_old = regulator;
-    if(speed_set != 0.0) {
-      // ПИ регулятор
-      float error = abs(speed_set) - speed_real;
-      integral += error * ki;
-      integral = (integral > 200 ? 200 : integral);
-      regulator = constrain((error * kp + integral), 0, 255);
-      regulator = (regulator + regulator_old) * 0.5;
-    }else regulator = 0;
-
-    motor.speed(regulator);
+    motor.speed(abs(reg.output));
     
     time = millis();
   }
 
-#ifdef ENABLE_ROS
-  speed_pub.publish(&speed_msg);
-  nh.spinOnce();
-#endif
-
 #ifdef DEBUG_ENCODER
   // Для плоттера
-  Serial.print(speed_set);
+  Serial.print(reg.set_point);
   Serial.print(',');
-  Serial.print(speed_real);
+  Serial.print(reg.input);
   Serial.print(',');
-  Serial.println(regulator);
+  Serial.println(reg.output);
 
   parsing();
 #endif
 
   delay(10);
 }
-
-#ifdef ENABLE_ROS
-void feedback(const std_msgs::Float64MultiArray& cmd) {
-  speed = cmd.data[0];
-  
-  int int_turn = (int)cmd.data[1];
-  if(old_turn != int_turn) {
-    servo.write(int_turn);
-    old_turn = int_turn;
-  }
-}
-#endif
 
 #ifdef DEBUG_ENCODER
 void parsing() {
@@ -202,13 +173,30 @@ void parsing() {
     float value = Serial.parseInt();
     
     switch(argument) {
-      case 's':
-        speed_set = value;
+      case 'd':
+        reg.set_point = value;
       break;
     }
   }
 }
 #endif
+
+void receive_data(int bytes) {
+  uint8_t a = Wire.read(),
+          b = Wire.read();
+          
+  reg.set_point = ((b << 8) | a);
+  turn = (uint8_t)Wire.read();
+}
+
+void request_data() {
+  int8_t set_point;
+
+  set_point = (360 * (encoder_pulse - encoder_pusle_old_wire)) / TICK_REVOLUTION;
+  encoder_pusle_old_wire = encoder_pulse;
+  
+  Wire.write(set_point);
+}
 
 void encoder_update() {
   encoder_pulse++;
