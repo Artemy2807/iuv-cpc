@@ -1,0 +1,154 @@
+<?xml version="1.0"?>
+<robot name="mobile" xmlns:xacro="http://ros.org/wiki/xacro">
+	<material name="blue">
+		<color rgba="0 0 1.0 1.0"/>
+	</material>
+	<material name="black">
+		<color rgba="0.1 0.1 0.1 1.0"/>
+	</material>
+	<material name="gray">
+		<color rgba="0.3 0.3 0.3 1.0"/>
+	</material>
+
+	<link name="base_link">
+		<visual>
+			<origin rpy="0 0 -1.5708" xyz="0 0.1375 0.048"/>
+			<geometry>
+				<mesh filename="package://mobile/car_parts/rviz/car-body.stl" scale="0.001 0.001 0.001"/>
+			</geometry>
+			<material name="blue"/>
+		</visual>
+		<collision>
+			<origin rpy="0 0 -1.5708" xyz="0 0.1375 0.048"/>
+			<geometry>
+				<mesh filename="package://mobile/car_parts/rviz/car-body.stl" scale="0.001 0.001 0.001"/>
+			</geometry>
+		</collision>
+	</link>
+
+	<joint name="base_to_laser" type="fixed">
+		<origin xyz="0.06 0.13 -0.545"/>
+		<parent link="base_link"/>
+		<child link="laser"/>
+	</joint>
+	<link name="laser">
+		<visual>
+			<origin rpy="1.5708 0 0"/>
+			<geometry>
+				<mesh filename="package://mobile/car_parts/rviz/rplidar-a1.stl" scale="0.001 0.001 0.001"/>
+			</geometry>
+			<material name="black"/>
+		</visual>
+		<collision>
+			<origin rpy="1.5708 0 0"/>
+			<geometry>
+				<mesh filename="package://mobile/car_parts/rviz/rplidar-a1.stl" scale="0.001 0.001 0.001"/>
+			</geometry>
+		</collision>
+	</link>
+
+	<joint name="base_to_camera" type="fixed">
+		<origin xyz="0.265 0 0.12"/>
+		<parent link="base_link"/>
+		<child link="camera"/>
+	</joint>
+	<link name="camera">
+		<visual>
+			<origin rpy="1.5708 0 1.5708"/>
+			<geometry>
+				<mesh filename="package://mobile/car_parts/rviz/cam-f100.stl" scale="0.001 0.001 0.001"/>
+			</geometry>
+			<material name="black"/>
+		</visual>
+		<collision>
+			<origin rpy="1.5708 0 1.5708"/>
+			<geometry>
+				<mesh filename="package://mobile/car_parts/rviz/cam-f100.stl" scale="0.001 0.001 0.001"/>
+			</geometry>
+		</collision>
+	</link>
+	
+	<joint name="base_to_top_left_wheel" type="fixed">
+		<origin xyz="0.185 0.115 0.052"/>
+		<parent link="base_link"/>
+		<child link="top_left_wheel"/>
+	</joint>
+	<link name="top_left_wheel">
+		<visual>
+			<origin rpy="1.5708 0 0"/>
+			<geometry>
+				<cylinder length="0.045" radius="0.052"/>
+			</geometry>
+			<material name="gray"/>
+		</visual>
+		<collision>
+			<origin rpy="1.5708 0 0"/>
+			<geometry>
+				<cylinder length="0.045" radius="0.052"/>
+			</geometry>
+		</collision>
+	</link>
+
+	<joint name="base_to_top_right_wheel" type="fixed">
+		<origin xyz="0.185 -0.115 0.052"/>
+		<parent link="base_link"/>
+		<child link="top_right_wheel"/>
+	</joint>
+	<link name="top_right_wheel">
+		<visual>
+			<origin rpy="1.5708 0 0"/>
+			<geometry>
+				<cylinder length="0.045" radius="0.052"/>
+			</geometry>
+			<material name="gray"/>
+		</visual>
+		<collision>
+			<origin rpy="1.5708 0 0"/>
+			<geometry>
+				<cylinder length="0.045" radius="0.052"/>
+			</geometry>
+		</collision>
+	</link>
+
+	<joint name="base_to_bottom_left_wheel" type="fixed">
+		<origin xyz="-0.145 0.115 0.052"/>
+		<parent link="base_link"/>
+		<child link="bottom_left_wheel"/>
+	</joint>
+	<link name="bottom_left_wheel">
+		<visual>
+			<origin rpy="1.5708 0 0"/>
+			<geometry>
+				<cylinder length="0.045" radius="0.052"/>
+			</geometry>
+			<material name="gray"/>
+		</visual>
+		<collision>
+			<origin rpy="1.5708 0 0"/>
+			<geometry>
+				<cylinder length="0.045" radius="0.052"/>
+			</geometry>
+		</collision>
+	</link>
+
+	<joint name="base_to_bottom_right_wheel" type="fixed">
+		<origin xyz="-0.145 -0.115 0.052"/>
+		<parent link="base_link"/>
+		<child link="bottom_right_wheel"/>
+	</joint>
+	<link name="bottom_right_wheel">
+		<visual>
+			<origin rpy="1.5708 0 0"/>
+			<geometry>
+				<cylinder length="0.045" radius="0.052"/>
+			</geometry>
+			<material name="gray"/>
+		</visual>
+		<collision>
+			<origin rpy="1.5708 0 0"/>
+			<geometry>
+				<cylinder length="0.045" radius="0.052"/>
+			</geometry>
+		</collision>
+	</link>
+</robot>
