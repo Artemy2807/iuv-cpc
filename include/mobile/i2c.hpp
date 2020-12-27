@@ -1,5 +1,8 @@
 #pragma once
 #include <linux/i2c-dev.h> 
+#include <sys/types.h>
+#include <sys/ioctl.h>
+#include <fcntl.h>
 #include <string>
 
 //
@@ -21,13 +24,13 @@ namespace i2c {
             address;
         char filename[20];
 
-        Device(int number_i2c_, int address_) :
+        Device(int number_i2c_ = 1, int address_ = 0x08) :
             number_i2c(number_i2c_),
             address(address_)
         {
             snprintf(filename, 19, "/dev/i2c-%d", number_i2c);
         }
-    }
+    };
 
     class I2C {
     public:
@@ -39,7 +42,7 @@ namespace i2c {
         ssize_t read(void* receive, size_t size);
         ssize_t write(void* transmitter, size_t size);
     private:
-        int* fd;
+        int fd;
 
         Device device;
     };

@@ -1,5 +1,9 @@
 #include <ros/ros.h>
 #include <angles/angles.h>
+#include <hardware_interface/joint_state_interface.h>
+#include <hardware_interface/joint_command_interface.h>
+#include <hardware_interface/robot_hw.h>
+#include <controller_manager/controller_manager.h>
 #include "i2c.hpp"
 
 class Hardware : public hardware_interface::RobotHW {
@@ -8,13 +12,14 @@ public:
 
 private:
     
-    struct class JointType {
+    enum class JointType {
         NONE = 0,
         MOTOR,
         SERVO,
     };
     
 	ros::Timer timer_1;
+	ros::Duration elapsed_time;
     int loop_hz = 0;
     
     std::shared_ptr<controller_manager::ControllerManager> controller_manager;
@@ -22,13 +27,14 @@ private:
 	i2c::I2C i2c_device;
     
     hardware_interface::JointStateInterface joint_state_interface;
+	hardware_interface::VelocityJointInterface velocity_joint_interface;
     hardware_interface::PositionJointInterface position_joint_interface;
 	
 	double joint_position[2];
     double joint_velocity[2];
     double joint_effort[2];
-    double joint_cmd,
-    	wheel_radians = 0.0,
+    double joint_cmd[2];
+    double wheel_radians = 0.0;
 	int position_prev = 0,
 		velocity_prev = 0;
     
@@ -40,11 +46,11 @@ private:
 
 Hardware::Hardware(ros::NodeHandle& nh_, std::string rear_wheel, std::string front_steer) {
     // Подключение к arduino по i2c
-	i2c::Device device_des(1, 0x10);
+	i2c::Device device_des(0, 0x08);
 	i2c_device.open(device_des);
 	
-	init(nh_);
-    
+	init(nh_, rear_wheel, front_steer);
+
     controller_manager.reset(new controller_manager::ControllerManager(this, nh_));
     
     loop_hz = 10;
@@ -54,14 +60,18 @@ Hardware::Hardware(ros::NodeHandle& nh_, std::string rear_wheel, std::string fro
 void Hardware::init(ros::NodeHandle& nh_, std::string rear_wheel, std::string front_steer) {
 	std::string names[2] = { rear_wheel, front_steer };
 	for(int i = 0; i < 2; i++) {
-		hardware_interface::JointStateHandle joint_state_handle(&names[i], 
+		hardware_interface::JointStateHandle joint_state_handle(names[i], 
                                             &joint_position[i], &joint_velocity[i], &joint_effort[i]);
 		joint_state_interface.registerHandle(joint_state_handle);
 	}
 
-	hardware_interface::JointHandle joint_state_handle(joint_state_interface.getHandle(rear_wheel), 
-                                                        &joint_cmd);
-	position_joint_interface.registerHandle(joint_state_handle);
+	hardware_interface::JointHandle joint_state_handle_velocity(joint_state_interface.getHandle(rear_wheel),
+														&joint_cmd[0]);
+	velocity_joint_interface.registerHandle(joint_state_handle_velocity);
+
+	hardware_interface::JointHandle joint_state_handle_position(joint_state_interface.getHandle(front_steer), 
+                                                        &joint_cmd[1]);
+	position_joint_interface.registerHandle(joint_state_handle_position);
 
 	/*
     for(int i = 0; i < 2; i++) {
@@ -90,13 +100,14 @@ void Hardware::init(ros::NodeHandle& nh_, std::string rear_wheel, std::string fr
 	*/
     
     registerInterface(&joint_state_interface);
-    //registerInterface(&velocity_joint_interface);
+    registerInterface(&velocity_joint_interface);
     //registerInterface(&velocity_jount_saturation);
     registerInterface(&position_joint_interface);
     //registerInterface(&position_jount_saturation);
 }
 
 void Hardware::update(const ros::TimerEvent& e) {
+	ROS_INFO("update!!!!!!!!!!!!!!!!!!!");
     elapsed_time = ros::Duration(e.current_real - e.last_real);
     read();
     controller_manager->update(ros::Time::now(), elapsed_time);
@@ -110,7 +121,9 @@ void Hardware::read() {
 
 	// Преобразование градусов в радианы
 	wheel_radians += angles::from_degrees((double)value);
-	joint_cmd = wheel_radians;
+	joint_position[0] = wheel_radians;
+	joint_position[1] = angles::from_degrees(position_prev);
+	ROS_INFO("Joint command velocity: %f", angles::to_degrees(joint_position[0]));
 }
 
 void Hardware::write() {
@@ -118,8 +131,10 @@ void Hardware::write() {
 	// position - угол поворота передних колёс в градусах
 	// Так как в ros используются система единиц СИ, необходимо 
 	// радианы преобразовать в градусы
-	int velocity = (int)angles::to_degrees(joint_velocity[0]),
-		position = (int)angles::to_degrees(joint_position[1]);
+	int velocity = (int)angles::to_degrees(joint_cmd[0]),
+		position = (int)angles::to_degrees(joint_cmd[1]);
+
+	ROS_INFO("\n\tVelocity: %d\n\tPosition: %d", velocity, position);
 	
 	if((velocity_prev != velocity) || (position_prev != position)) {
 		// Создание отправляемых данных
@@ -128,8 +143,8 @@ void Hardware::write() {
 		// так как значение градусов может превышать 255 градусов)
 		// [3 байт] - угол поворота передних колёс
 		uint8_t wbuf[3];
-		std::memcpy(&wbuf[0], velocity, 2);
-		wbuf[2] = position;
+		std::memcpy(&wbuf[0], &velocity, 2);
+		wbuf[2] = 90 + position;
 
 		// Отправление данных на arduino
 		i2c_device.write((void*)&wbuf, 3);
@@ -142,8 +157,10 @@ void Hardware::write() {
 int main(int argc, char** argv) {
 	ros::init(argc, argv, "robot_hardware");
 	ros::NodeHandle nh;
+	ros::MultiThreadedSpinner spinner(2);
 	Hardware hardware(nh,
 					"rear_wheel_joint", 		// Название узла заднего колеса	
 					"front_steer_joint");		// Название узла переднего рулевого управления
-	ros::spin();
+	spinner.spin();
+	return 0;
 }
