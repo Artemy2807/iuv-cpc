@@ -2,7 +2,10 @@
 <launch>
     <rosparam file="$(find mobile)/config/controller.yaml" command="load"/>
 
+	<include file="$(find mobile)/launch/robo_viz.launch"/>
+
 	<node pkg="mobile" type="hardware_node" name="robo_hardware" output="screen">
+		<remap from="/mobile/mobile_base_controller/cmd_vel" to="/cmd_vel"/>
 	</node>
 
     <node pkg="controller_manager" type="spawner" name="controller_manager" output="screen" 
@@ -11,6 +14,6 @@
                 /mobile/joints_update">
     </node>
 
-    <node pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py" name="teleop_twist_keyboard">
-    </node>
+    <!--<node pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py" name="teleop_twist_keyboard">
+    </node>-->
 </launch>
