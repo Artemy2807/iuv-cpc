@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+	controller_manager
 	tf
 )
 
@@ -119,11 +120,12 @@ catkin_package(
 include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
+	include/mobile
 )
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/mobile.cpp
+#   src/i2c.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -134,7 +136,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
- add_executable(hardware_node src/robot-hardware.cpp)
+ add_executable(hardware_node src/robot-hardware.cpp src/i2c.cpp)
 
  add_executable(teleop_node src/mobile-teleop.cpp)
 

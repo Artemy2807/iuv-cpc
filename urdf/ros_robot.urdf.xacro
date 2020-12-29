@@ -68,9 +68,33 @@
 		</collision>
 	</link>
 	
-	<joint name="base_to_top_left_wheel" type="fixed">
-		<origin xyz="0.185 0.115 0.052"/>
+	<joint name="front_steer_joint" type="revolute">
+		<limit effort="100" lower="-1" upper="1" velocity="10"/>
+		<axis xyz="0 0 -1"/>
+		<origin xyz="0.185 0 0.052"/>
 		<parent link="base_link"/>
+		<child link="front_steer"/>
+	</joint>	
+	<link name="front_steer">
+	</link>
+
+	<joint name="front_left_wheel_revolute_joint" type="revolute">
+		<limit effort="100" lower="-1" upper="1" velocity="10"/>		
+		<axis xyz="0 0 1"/>
+		<origin rpy="0 0 0" xyz="0.185 0.115 0.052"/>
+		<mimic joint="front_steer_joint" multiplier="1.0"/>
+		<parent link="base_link"/>
+		<child link="front_left_wheel_revolute"/>	
+	</joint>
+	<link name="front_left_wheel_revolute">
+	</link>
+	
+
+	<joint name="base_to_top_left_wheel" type="continuous">
+		<origin rpy="0 0 0"/>
+		<axis xyz="0 1 0"/>
+		<mimic joint="base_to_bottom_left_wheel" multiplier="1.0"/>
+		<parent link="front_left_wheel_revolute"/>
 		<child link="top_left_wheel"/>
 	</joint>
 	<link name="top_left_wheel">
@@ -89,9 +113,22 @@
 		</collision>
 	</link>
 
-	<joint name="base_to_top_right_wheel" type="fixed">
-		<origin xyz="0.185 -0.115 0.052"/>
+	<joint name="front_right_wheel_revolute_joint" type="revolute">
+		<limit effort="100" lower="-1" upper="1" velocity="10"/>		
+		<axis xyz="0 0 1"/>
+		<origin rpy="0 0 0" xyz="0.185 -0.115 0.052"/>
+		<mimic joint="front_steer_joint" multiplier="1.0"/>
 		<parent link="base_link"/>
+		<child link="front_right_wheel_revolute"/>	
+	</joint>
+	<link name="front_right_wheel_revolute">
+	</link>
+
+	<joint name="base_to_top_right_wheel" type="continuous">
+		<origin rpy="0 0 0"/>
+		<axis xyz="0 1 0"/>
+		<mimic joint="base_to_bottom_right_wheel" multiplier="1.0"/>
+		<parent link="front_right_wheel_revolute"/>
 		<child link="top_right_wheel"/>
 	</joint>
 	<link name="top_right_wheel">
@@ -110,42 +147,51 @@
 		</collision>
 	</link>
 
-	<joint name="base_to_bottom_left_wheel" type="fixed">
-		<origin xyz="-0.145 0.115 0.052"/>
+	<joint name="rear_wheel_joint" type="continuous">
+		<axis xyz="0 1 0"/>
+		<origin rpy="0 0 0" xyz="-0.145 0 0.052"/>
+		<parent link="base_link"/>
+		<child link="rear_steer"/>
+	</joint>	
+	<link name="rear_steer">
+	</link>
+
+	<joint name="base_to_bottom_left_wheel" type="continuous">
+		<axis xyz="0 0 1"/>
+		<origin rpy="-1.5708 0 0" xyz="-0.145 0.115 0.052"/>
+		<mimic joint="rear_wheel_joint" multiplier="1.0"/>
 		<parent link="base_link"/>
 		<child link="bottom_left_wheel"/>
 	</joint>
 	<link name="bottom_left_wheel">
 		<visual>
-			<origin rpy="1.5708 0 0"/>
 			<geometry>
 				<cylinder length="0.045" radius="0.052"/>
 			</geometry>
 			<material name="gray"/>
 		</visual>
 		<collision>
-			<origin rpy="1.5708 0 0"/>
 			<geometry>
 				<cylinder length="0.045" radius="0.052"/>
 			</geometry>
 		</collision>
 	</link>
 
-	<joint name="base_to_bottom_right_wheel" type="fixed">
-		<origin xyz="-0.145 -0.115 0.052"/>
+	<joint name="base_to_bottom_right_wheel" type="continuous">
+		<axis xyz="0 0 1"/>
+		<origin rpy="-1.5708 0 0" xyz="-0.145 -0.115 0.052"/>
+		<mimic joint="rear_wheel_joint" multiplier="1.0"/>
 		<parent link="base_link"/>
 		<child link="bottom_right_wheel"/>
 	</joint>
 	<link name="bottom_right_wheel">
 		<visual>
-			<origin rpy="1.5708 0 0"/>
 			<geometry>
 				<cylinder length="0.045" radius="0.052"/>
 			</geometry>
 			<material name="gray"/>
 		</visual>
 		<collision>
-			<origin rpy="1.5708 0 0"/>
 			<geometry>
 				<cylinder length="0.045" radius="0.052"/>
 			</geometry>

@@ -9,7 +9,7 @@
 #define MOTOR_B1          8
 #define SERVO_PIN         10
 // Параметры машинки
-#define TICK_REVOLUTION   55.0
+#define TICK_REVOLUTION   120.0
 
 class Motor {
 private:
