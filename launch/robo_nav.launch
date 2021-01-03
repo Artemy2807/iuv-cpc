@@ -19,6 +19,8 @@
         	<rosparam file="$(find mobile)/param/global_costmap_params.yaml" command="load"/> 
         	<!-- move_base params -->
         	<rosparam file="$(find mobile)/param/move_base_params.yaml" command="load"/>
+            
+            <param name="clearing_rotation_allowed" value="false" />
  	</node> 
 
 	<!-- rplidar -->
