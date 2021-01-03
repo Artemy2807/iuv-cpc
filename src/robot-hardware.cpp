@@ -116,7 +116,7 @@ void Hardware::update(const ros::TimerEvent& e) {
 
 void Hardware::read() {
 	// Считывание количества градусов, которое проехала модель
-	uint8_t value;
+	uint8_t value = 0;
 	i2c_device.read((char*)&value, 1);
 
 	// Преобразование градусов в радианы

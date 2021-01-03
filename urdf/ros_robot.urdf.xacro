@@ -9,6 +9,12 @@
 	<material name="gray">
 		<color rgba="0.3 0.3 0.3 1.0"/>
 	</material>
+	
+	<xacro:macro name="wheel">
+		<geometry>
+			<mesh filename="package://mobile/car_parts/rviz/wheel.stl" scale="0.001 0.001 0.001"/>
+		</geometry>
+	</xacro:macro>
 
 	<link name="base_link">
 		<visual>
@@ -27,13 +33,13 @@
 	</link>
 
 	<joint name="base_to_laser" type="fixed">
-		<origin xyz="0.06 0.13 -0.545"/>
+		<origin xyz="-0.045 0 0"/>
 		<parent link="base_link"/>
 		<child link="laser"/>
 	</joint>
 	<link name="laser">
 		<visual>
-			<origin rpy="1.5708 0 0"/>
+			<origin rpy="1.5708 0 0" xyz="0.06 0.13 -0.545"/>
 			<geometry>
 				<mesh filename="package://mobile/car_parts/rviz/rplidar-a1.stl" scale="0.001 0.001 0.001"/>
 			</geometry>
@@ -99,17 +105,13 @@
 	</joint>
 	<link name="top_left_wheel">
 		<visual>
-			<origin rpy="1.5708 0 0"/>
-			<geometry>
-				<cylinder length="0.045" radius="0.052"/>
-			</geometry>
+			<origin rpy="-1.5708 0 0"/>
+			<wheel/>
 			<material name="gray"/>
 		</visual>
 		<collision>
-			<origin rpy="1.5708 0 0"/>
-			<geometry>
-				<cylinder length="0.045" radius="0.052"/>
-			</geometry>
+			<origin rpy="-1.5708 0 0"/>
+			<wheel/>
 		</collision>
 	</link>
 
@@ -133,17 +135,13 @@
 	</joint>
 	<link name="top_right_wheel">
 		<visual>
-			<origin rpy="1.5708 0 0"/>
-			<geometry>
-				<cylinder length="0.045" radius="0.052"/>
-			</geometry>
+			<origin rpy="1.5708 3.14 0"/>
+			<wheel/>
 			<material name="gray"/>
 		</visual>
 		<collision>
-			<origin rpy="1.5708 0 0"/>
-			<geometry>
-				<cylinder length="0.045" radius="0.052"/>
-			</geometry>
+			<origin rpy="1.5708 3.14 0"/>
+			<wheel/>
 		</collision>
 	</link>
 
@@ -165,36 +163,28 @@
 	</joint>
 	<link name="bottom_left_wheel">
 		<visual>
-			<geometry>
-				<cylinder length="0.045" radius="0.052"/>
-			</geometry>
+			<wheel/>
 			<material name="gray"/>
 		</visual>
 		<collision>
-			<geometry>
-				<cylinder length="0.045" radius="0.052"/>
-			</geometry>
+			<wheel/>
 		</collision>
 	</link>
 
 	<joint name="base_to_bottom_right_wheel" type="continuous">
-		<axis xyz="0 0 1"/>
-		<origin rpy="-1.5708 0 0" xyz="-0.145 -0.115 0.052"/>
+		<axis xyz="0 0 -1"/>
+		<origin rpy="1.5708 3.14 0" xyz="-0.145 -0.115 0.052"/>
 		<mimic joint="rear_wheel_joint" multiplier="1.0"/>
 		<parent link="base_link"/>
 		<child link="bottom_right_wheel"/>
 	</joint>
 	<link name="bottom_right_wheel">
 		<visual>
-			<geometry>
-				<cylinder length="0.045" radius="0.052"/>
-			</geometry>
+			<wheel/>
 			<material name="gray"/>
 		</visual>
 		<collision>
-			<geometry>
-				<cylinder length="0.045" radius="0.052"/>
-			</geometry>
+			<wheel/>
 		</collision>
 	</link>
 </robot>
