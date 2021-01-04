@@ -11,6 +11,12 @@
 // Параметры машинки
 #define TICK_REVOLUTION   120.0
 
+#ifdef DEBUG_ENCODER
+  #define WAIT_CMD        15000
+#else
+  #define WAIT_CMD        2000
+#endif
+
 class Motor {
 private:
   int pwm, 
@@ -72,11 +78,12 @@ public:
 };
 
 struct Regulator {
-  int output = 0, output_old = 0;
+  int output = 0;
   int input = 0, set_point = 0;
-  float integral = 0;
-  float kp = 60.0, 
-      ki = 120.0;
+  float error = 0.0, 
+        sum_error = 0.0;
+  float kp = 0.7, 
+        ki = 8.0;
 };
 
 void receive_data(int bytes);
@@ -91,17 +98,19 @@ Servo servo;
 Motor motor(MOTOR_PWM, MOTOR_A1, MOTOR_B1);
 int turn = 90, old_turn = 90;
 Regulator reg;
-unsigned long time = 0;
-volatile unsigned long encoder_pulse = 0,
-                      encoder_pulse_old = 0,
-                      encoder_pusle_old_wire = 0;
+unsigned long time = 0,
+              time_wire = 0;
+volatile bool encoder_increase = true;
+volatile long encoder_pulse = 0,
+              encoder_pulse_old = 0,
+              encoder_pusle_old_wire = 0;
 
 void setup() {
 #ifdef DEBUG_ENCODER
   // Для плоттера
   Serial.begin(115200);
   Serial.setTimeout(50);
-  Serial.println("setpoint, real, regulator");
+  Serial.println("setpoint, input, output");
 #endif
 
   Wire.begin(8);
@@ -118,6 +127,7 @@ void setup() {
   servo.write(turn);
 
   time = millis();
+  time_wire = millis();
 }
 
 void loop() {
@@ -126,26 +136,28 @@ void loop() {
     servo.write(turn);
     old_turn = turn;
   }
+
+  if((millis() - time_wire) >= WAIT_CMD) 
+    reg.set_point = 0;
   
   if((millis() - time) >= 300) {
     // Расчёт ШИМ для регулятора мотора
     reg.input = (360U * 1000U * (encoder_pulse - encoder_pulse_old)) / (TICK_REVOLUTION * (millis() - time));
     encoder_pulse_old = encoder_pulse;
     
-    reg.output_old = reg.output;
-    if(reg.input != 0) {
+    if(reg.set_point != 0) {
       // ПИ регулятор
-      float error = reg.input - reg.set_point;
-      reg.integral += error * reg.ki;
-      reg.integral = (reg.integral > 200 ? 200 : reg.integral);
-      reg.output = constrain((error * reg.kp + reg.integral), -255, 255);
-      reg.output = (reg.output + reg.output_old) * 0.5;
+      reg.error = reg.set_point - reg.input;
+      reg.sum_error += (reg.error * ((float)(millis() - time) / 1000.0));
+      reg.output = constrain((float)(reg.error * reg.kp + reg.sum_error * reg.ki), -255, 255);
     }else reg.output = 0;
 
     // Установить направление движения
     bool new_direction = (reg.output >= 0);
-    if(motor.get_direction() != new_direction)
+    if(motor.get_direction() != new_direction) {
+      encoder_increase = new_direction;
       motor.direction(new_direction);
+    }
 
     motor.speed(abs(reg.output));
     
@@ -175,6 +187,7 @@ void parsing() {
     switch(argument) {
       case 'd':
         reg.set_point = value;
+         time_wire = millis();
       break;
     }
   }
@@ -187,6 +200,7 @@ void receive_data(int bytes) {
           
   reg.set_point = ((b << 8) | a);
   turn = (uint8_t)Wire.read();
+  time_wire = millis();
 }
 
 void request_data() {
@@ -199,5 +213,5 @@ void request_data() {
 }
 
 void encoder_update() {
-  encoder_pulse++;
+  encoder_pulse += (encoder_increase ? 1 : -1);
 }
