@@ -15,19 +15,28 @@
   
   
   	<node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
-        	<rosparam file="$(find mobile)/param/local_costmap_params.yaml" command="load"/>
-        	<rosparam file="$(find mobile)/param/global_costmap_params.yaml" command="load"/> 
-        	<!-- move_base params -->
-        	<rosparam file="$(find mobile)/param/move_base_params.yaml" command="load"/>
+			<rosparam file="$(find mobile)/config/local_costmap_params.yaml" command="load"/>
+			<rosparam file="$(find mobile)/config/global_costmap_params.yaml" command="load"/> 
+			<!-- move_base params -->
+			<rosparam file="$(find mobile)/config/teb_local_planner_params.yaml" command="load"/>
             
-            <param name="clearing_rotation_allowed" value="false" />
- 	</node> 
+			<param name="base_global_planner" value="global_planner/GlobalPlanner" />
+			<param name="planner_frequency" value="1.0" />
+			<param name="planner_patience" value="5.0" />
+
+			<param name="base_local_planner" value="teb_local_planner/TebLocalPlannerROS" />
+			<param name="controller_frequency" value="5.0" />
+			<param name="controller_patience" value="15.0" />
+            
+			<param name="clearing_rotation_allowed" value="false" />
+	</node> 
 
 	<!-- rplidar -->
 	<include file="$(find mobile)/launch/robo_rplidar.launch" />
+
 	<!-- amcl -->
 	<include file="$(find mobile)/launch/robo_amcl.launch" />
 
-    <!-- rviz -->
-    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find mobile)/rviz_cfg/amcl.rviz" />
+	<!-- rviz -->
+	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find mobile)/rviz_cfg/amcl.rviz" />
 </launch>
