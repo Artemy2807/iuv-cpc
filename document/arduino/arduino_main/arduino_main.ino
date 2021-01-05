@@ -1,5 +1,5 @@
 // Параметры отладки программы
-#define DEBUG_ENCODER
+//#define DEBUG_ENCODER
 #include <Wire.h>
 #include <Servo.h>
 
@@ -92,6 +92,9 @@ void encoder_update();
 
 #ifdef DEBUG_ENCODER
 void parsing();
+
+int16_t distance = 0;
+volatile long encoder_distance_old = 0;
 #endif
 
 Servo servo;
@@ -110,7 +113,7 @@ void setup() {
   // Для плоттера
   Serial.begin(115200);
   Serial.setTimeout(50);
-  Serial.println("setpoint, input, output");
+  Serial.println("setpoint, input, output, distance");
 #endif
 
   Wire.begin(8);
@@ -160,6 +163,11 @@ void loop() {
     }
 
     motor.speed(abs(reg.output));
+
+#ifdef DEBUG_ENCODER
+  distance = (360 * (encoder_pulse - encoder_distance_old)) / TICK_REVOLUTION;
+  encoder_distance_old = encoder_pulse;
+#endif
     
     time = millis();
   }
@@ -170,7 +178,9 @@ void loop() {
   Serial.print(',');
   Serial.print(reg.input);
   Serial.print(',');
-  Serial.println(reg.output);
+  Serial.print(reg.output);
+  Serial.print(',');
+  Serial.println(distance);
 
   parsing();
 #endif
@@ -204,12 +214,15 @@ void receive_data(int bytes) {
 }
 
 void request_data() {
-  int8_t set_point;
-
-  set_point = (360 * (encoder_pulse - encoder_pusle_old_wire)) / TICK_REVOLUTION;
-  encoder_pusle_old_wire = encoder_pulse;
+  union {
+    int16_t data;
+    byte b_data[sizeof(data)];
+  } td;
   
-  Wire.write(set_point);
+  td.data = (360 * (encoder_pulse - encoder_pusle_old_wire)) / TICK_REVOLUTION;
+  encoder_pusle_old_wire = encoder_pulse;
+
+  Wire.write(td.b_data, 2);
 }
 
 void encoder_update() {
