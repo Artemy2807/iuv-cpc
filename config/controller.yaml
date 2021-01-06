@@ -18,7 +18,7 @@ mobile:
         twist_covariance_diagonal: [0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1000.0]
 
         # Расстояние между задним и передним колесом
-        wheel_separation_h: 0.1625
+        wheel_separation_h: 0.323
         # Радиус колес
         wheel_radius: 0.055
 
