@@ -18,28 +18,28 @@ TebLocalPlannerROS:
     
     # Параметры робота
     # Максимальная скорость движения м/с
-    max_vel_x: 0.5
+    max_vel_x: 2.00
     # Максимальная абсолютная поступательная скорость робота при движении назад в м/с
-    max_vel_x_backwards: 0.2
+    max_vel_x_backwards: 1.50
     # Предел ускорения робота м/с^2
-    acc_lim_x: 1.5
+    acc_lim_x: 0.01
     # ВНИМАНИЕ: Эти параметры не нужны для carlike робота
     max_vel_y: 0.0
     # Максимальная угловая скорость радианы/с
-    max_vel_theta: 1.0
+    max_vel_theta: 0.8
     # Предел ускорения вращения робота радианы/с^2
-    acc_lim_theta: 0.5
+    acc_lim_theta: 0.2
     
     # ********************** Параметры carlike робота ********************
     min_turning_radius: 0.5         # Минимальный радиус поворота робота
-    wheelbase: 0.4                  # Длина колесной базы
+    wheelbase: 0.33                 # Длина колесной базы
     cmd_angle_instead_rotvel: False # Заменить скорость вращения в сообщении о заданной скорости на соответствующий угол поворота
     # ********************************************************************
 
     footprint_model: # types: "point", "circular", "two_circles", "line", "polygon"
         type: "line"
         line_start: [0.0, 0.0]
-        line_end: [0.4, 0.0]
+        line_end: [0.33, 0.0]
 
     # Параметры допуска цели
     xy_goal_tolerance: 0.2
@@ -47,7 +47,7 @@ TebLocalPlannerROS:
     free_goal_vel: False
     complete_global_plan: True
 
-    min_obstacle_dist: 0.27
+    min_obstacle_dist: 0.18
     inflation_dist: 0.6
     include_costmap_obstacles: True
     costmap_obstacles_behind_robot_dist: 1.0
