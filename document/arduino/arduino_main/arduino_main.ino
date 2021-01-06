@@ -1,5 +1,5 @@
 // Параметры отладки программы
-#define DEBUG_ENCODER
+//#define DEBUG_ENCODER
 #include <Wire.h>
 #include <Servo.h>
 
@@ -81,9 +81,9 @@ struct Regulator {
   int output = 0;
   int input = 0, set_point = 0;
   float error = 0.0, 
-        sum_error = 0.0;
-  float kp = 0.7, 
-        ki = 8.0;
+        integral = 0.0;
+  float kp = 0.1, 
+        ki = 0.1;
 };
 
 void receive_data(int bytes);
@@ -92,6 +92,7 @@ void encoder_update();
 
 #ifdef DEBUG_ENCODER
 void parsing();
+
 #endif
 
 Servo servo;
@@ -139,27 +140,26 @@ void loop() {
 
   if((millis() - time_wire) >= WAIT_CMD) 
     reg.set_point = 0;
-  
+
   if((millis() - time) >= 300) {
+    unsigned long now_time = (millis() - time);
     // Расчёт ШИМ для регулятора мотора
-    reg.input = (360U * 1000U * (encoder_pulse - encoder_pulse_old)) / (TICK_REVOLUTION * (millis() - time));
+    reg.input = abs(360.0 * (encoder_pulse - encoder_pulse_old)) / (TICK_REVOLUTION * (now_time / 1000.0));
     encoder_pulse_old = encoder_pulse;
-    
-    if(reg.set_point != 0) {
-      // ПИ регулятор
-      reg.error = reg.set_point - reg.input;
-      reg.sum_error += (reg.error * ((float)(millis() - time) / 1000.0));
-      reg.output = constrain((float)(reg.error * reg.kp + reg.sum_error * reg.ki), -255, 255);
-    }else reg.output = 0;
+      
+    // ПИ регулятор
+    reg.error = abs(reg.set_point) - reg.input;
+    reg.integral = constrain(reg.integral + reg.error * reg.ki * (now_time / 1000.0), 0, 255);
+    reg.output = (abs(reg.set_point) > 0 ? constrain(reg.error * reg.kp + reg.integral, 0, 255) : 0);
 
     // Установить направление движения
-    bool new_direction = (reg.output >= 0);
+    bool new_direction = (reg.set_point >= 0);
     if(motor.get_direction() != new_direction) {
       encoder_increase = new_direction;
       motor.direction(new_direction);
     }
 
-    motor.speed(abs(reg.output));
+    motor.speed(reg.output);
     
     time = millis();
   }
@@ -204,12 +204,15 @@ void receive_data(int bytes) {
 }
 
 void request_data() {
-  int8_t set_point;
-
-  set_point = (360 * (encoder_pulse - encoder_pusle_old_wire)) / TICK_REVOLUTION;
-  encoder_pusle_old_wire = encoder_pulse;
+  union {
+    int16_t data;
+    byte b_data[sizeof(data)];
+  } td;
   
-  Wire.write(set_point);
+  td.data = (360 * (encoder_pulse - encoder_pusle_old_wire)) / TICK_REVOLUTION;
+  encoder_pusle_old_wire = encoder_pulse;
+
+  Wire.write(td.b_data, 2);
 }
 
 void encoder_update() {
