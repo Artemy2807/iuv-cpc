@@ -1,12 +1,7 @@
 <?xml version="1.0"?>
 <launch>
-	<node pkg="tf" type="static_transform_publisher" name="link1_broadcaster" args="0 0 0 0 0 0 base_link laser 10" />
 
-	<arg name="map_file" default="$(find mobile)/maps/my_home.yaml" />
-	
-	<!-- hardware -->
-	<node pkg="mobile" type="hardware_node" name="robo_hardware" output="screen">
-	</node>
+	<arg name="map_file" default="$(find mobile)/maps/fff.yaml" />
 
 	<!-- map -->
 	<node pkg="map_server" type="map_server" name="map_server" args="$(arg map_file)">
@@ -36,6 +31,8 @@
 
 	<!-- amcl -->
 	<include file="$(find mobile)/launch/robo_amcl.launch" />
+
+	<include file="$(find mobile)/launch/robo_move.launch" />
 
 	<!-- rviz -->
 	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find mobile)/rviz_cfg/amcl.rviz" />
