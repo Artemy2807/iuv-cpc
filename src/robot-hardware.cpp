@@ -37,6 +37,8 @@ private:
     double wheel_radians = 0.0;
 	int position_prev = 0,
 		velocity_prev = 0;
+
+	ros::Time time_prev;
     
     void init(ros::NodeHandle& nh_, std::string rear_wheel, std::string front_steer);
     void update(const ros::TimerEvent& e);
@@ -55,6 +57,8 @@ Hardware::Hardware(ros::NodeHandle& nh_, std::string rear_wheel, std::string fro
     
     loop_hz = 10;
     timer_1 = nh_.createTimer(ros::Duration(1.0 / loop_hz), &Hardware::update, this);
+
+	time_prev = ros::Time::now();
 }
 
 void Hardware::init(ros::NodeHandle& nh_, std::string rear_wheel, std::string front_steer) {
@@ -98,6 +102,7 @@ void Hardware::init(ros::NodeHandle& nh_, std::string rear_wheel, std::string fr
         }
     }
 	*/
+
     
     registerInterface(&joint_state_interface);
     registerInterface(&velocity_joint_interface);
@@ -107,8 +112,8 @@ void Hardware::init(ros::NodeHandle& nh_, std::string rear_wheel, std::string fr
 }
 
 void Hardware::update(const ros::TimerEvent& e) {
-	ROS_INFO("update!!!!!!!!!!!!!!!!!!!");
     elapsed_time = ros::Duration(e.current_real - e.last_real);
+	ROS_INFO("%f", (e.current_real - e.last_real).toSec());
     read();
     controller_manager->update(ros::Time::now(), elapsed_time);
     write();
@@ -116,11 +121,11 @@ void Hardware::update(const ros::TimerEvent& e) {
 
 void Hardware::read() {
 	// Считывание количества градусов, которое проехала модель
-	uint8_t value = 0;
-	i2c_device.read((char*)&value, 1);
+	int16_t data;
+	i2c_device.read((void*)&data, 2);
 
 	// Преобразование градусов в радианы
-	wheel_radians += angles::from_degrees((double)value);
+	wheel_radians += angles::from_degrees((double)data);
 	joint_position[0] = wheel_radians;
 	joint_position[1] = angles::from_degrees(position_prev);
 	ROS_INFO("Joint command velocity: %f", angles::to_degrees(joint_position[0]));
@@ -135,8 +140,10 @@ void Hardware::write() {
 		position = (int)angles::to_degrees(joint_cmd[1]);
 
 	ROS_INFO("\n\tVelocity: %d\n\tPosition: %d", velocity, position);
+
+	ros::Time time_current = ros::Time::now();
 	
-	if((velocity_prev != velocity) || (position_prev != position)) {
+	if((velocity_prev != velocity) || (position_prev != position) || (time_current - time_prev).toSec() > 1.5) {
 		// Создание отправляемых данных
 		// Все данные записываются в wbuf:
 		// [1-2 байты] - сколько градусов необходимо проехать (выделяется 2 байта,
@@ -151,6 +158,7 @@ void Hardware::write() {
 		
 		position_prev = position;
 		velocity_prev = velocity;
+		time_prev = time_current;
 	}
 }
 
