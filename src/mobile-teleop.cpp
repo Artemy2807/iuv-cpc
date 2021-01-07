@@ -1,40 +1,47 @@
-#include <std_msgs/Int64MultiArray.h>
+#include <geometry_msgs/Twist.h>
 #include <ros/ros.h>
 #include <termios.h>
 #include <iostream>
 
-#define STD_SPEED   0
-#define STD_TURN    90
-#define DIFF_TURN   30  
-
 static struct termios oldt;  
 
 struct MobileParam {
-    int speed,
+    float speed,
         turn;
         
-    MobileParam(int speed_ = 0, int turn_ = 0):
+    MobileParam(float speed_ = 0.0, float turn_ = 0.0):
         speed(speed_),
         turn(turn_)
     {
     }
 };
 
+void help_param(char* name) {
+	std::cout << "Use: \n" 
+			  << "	" << name << " <ros remapping arguments> <wheelbase> <max backward speed> <max forward speed> <steering range>\n"
+			  << "Options: \n"
+			  << "	<wheelbase>				  --		wheelbase in m (default: 1.0 m)\n"
+			  << "	<max backward speed> 	  --		max backward speed in m/s (default: 0.5 m/s)\n"
+			  << "										if set to a negative value, then it will become 0.0 m/s\n"
+			  << "	<max forward speed>		  --		max forward speed in m/s (default: 1.0 m/s)\n"
+			  << "										if set to a negative value, then it will become 0.0 m/s\n"
+			  << "	<steering range>					steering range in degrees (default: 30 degrees)\n"
+			  << "							  --		if set to a negative value, then it will become 0.0 m/s\n"
+			  << "										minimum border calculate: 0 - <steering range>\n"
+			  << "										maximum border calculate: 0 + <steering range>\n"
+}
+
 void help() {
     std::cout << "Control Your mobile!\n"
             << "------------------------------\n"
             << "space key, k: force stop\n"
-            << "w/s: shift the middle pos of throttle by +/- 5 pwm\n"
-            << "a/d: shift the middle pos of steering by +/- 2 pwm\n"
+            << "w/s: shift the middle pos of throttle by +/- 0.05 m/s\n"
+            << "a/d: shift the middle pos of steering by +/- 1 degree\n"
             << "Ctrl+C to quit\n";
 }
 
-void constrain(int& x, int min, int max) {
+void constrain(float& x, float min, float max) {
     x = (x < min ? min : (x > max ? max : x));
-}
-
-void print(MobileParam param) {
-	ROS_INFO("currently:\n\tspeed %d\n\tturn: %d\n", param.speed, param.turn);
 }
 
 bool is_readable() {
@@ -65,11 +72,12 @@ int main(int argc, char** argv) {
     // ROS
     ros::init(argc, argv, "mobile_teleop");
     ros::NodeHandle nh;
-    ros::Publisher publisher = nh.advertise<std_msgs::Int64MultiArray>("mobile/cmd_vel", 1);
+    ros::Publisher publisher = nh.advertise<geometry_msgs::Twist>("cmd_vel", 1);
     ros::Rate rate(50.);
     // Другие параметры
 	bool end = false;
-    MobileParam param_control(STD_SPEED, STD_TURN);
+    MobileParam param_control,
+    			param_twist;
     
     // Изменяем атрибуты терминала
     struct termios newt;
@@ -83,7 +91,13 @@ int main(int argc, char** argv) {
     newt.c_lflag &= ~(ECHO|ECHONL|ICANON|ISIG|IEXTEN);
     tcsetattr(0, TCSANOW, &newt);
 
+    help_param(argv[0]);
     help();
+
+    float wheelbase = (argc - 1 > 1 ? argv[1] ? 1.0);
+    	  max_backward_speed = (argc - 2 > 1 ? argv[2] ? 0.5),
+    	  max_forward_speed = (argc - 3 > 1 ? argv[3] ? 1.0),
+    	  steering_range = (argc - 4 > 1 ? argv[4] ? 30.0);
     
     while(ros::ok() && !end) {
         if(is_readable()) {
@@ -91,36 +105,41 @@ int main(int argc, char** argv) {
         	switch(key) {
             	case ' ':
             	case 'k':
-                	param_control.speed = STD_SPEED;
-                	param_control.turn = STD_TURN;
+                	param_control.speed = 0.0;
+                	param_control.turn = 0.0;
             	break;
                 
             	case 'w':
-                	param_control.speed += 5;
+                	param_control.speed += 0.05;
             	break;
             
             	case 's':
-                	param_control.speed -= 5;
+                	param_control.speed -= 0.05;
             	break;
             
             	case 'a':
-                	param_control.turn += 2;
+                	param_control.turn += 1;
            		break;
             
             	case 'd':
-                	param_control.turn -= 2;
+                	param_control.turn -= 1;
             	break;
             	case '\x003':
                 	end = true;
                 	return 0;
             	break;
         	}
-        	constrain(param_control.speed, 0, 255);
-        	constrain(param_control.turn, STD_TURN - DIFF_TURN, STD_TURN + DIFF_TURN);
+        	constrain(param_control.speed, -max_backward_speed, max_forward_speed);
+        	constrain(param_control.turn, 0.0 - steering_range, 0.0 + steering_range);
+
+        	param_twist.speed = param_control.speed;
+        	param_twist.turn = param_twist.speed / (wheelbase / std::tan(param_control.turn));
         }
-    	std_msgs::Int64MultiArray cmd;
-		cmd.data.push_back(param_control.speed);
-		cmd.data.push_back(param_control.turn);
+
+    	geometry_msgs::Twist cmd;
+    	cmd.linear.x = param_twist.speed; cmd.linear.y = 0.0; cmd.linear.z = 0.0;
+    	cmd.angular.x = 0.0; cmd.angular.y = 0.0; cmd.angular.z = param_twist.turn;
+
 		publisher.publish(cmd);
         ros::spinOnce();
         rate.sleep();
