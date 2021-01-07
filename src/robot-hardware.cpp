@@ -140,6 +140,7 @@ void Hardware::write() {
 		position = (int)angles::to_degrees(joint_cmd[1]);
 
 	ROS_INFO("\n\tVelocity: %d\n\tPosition: %d", velocity, position);
+	//position = 20;
 
 	ros::Time time_current = ros::Time::now();
 	
@@ -151,7 +152,7 @@ void Hardware::write() {
 		// [3 байт] - угол поворота передних колёс
 		uint8_t wbuf[3];
 		std::memcpy(&wbuf[0], &velocity, 2);
-		wbuf[2] = 90 + position;
+		wbuf[2] = 90 + (int)((float)position * (float)1.5);
 
 		// Отправление данных на arduino
 		i2c_device.write((void*)&wbuf, 3);
