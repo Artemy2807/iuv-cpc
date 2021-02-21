@@ -1,19 +1,22 @@
 <?xml version="1.0"?>
 <launch>
-    <rosparam file="$(find mobile)/config/controller.yaml" command="load"/>
-
-	<include file="$(find mobile)/launch/robo_viz.launch"/>
-
 	<node pkg="mobile" type="hardware_node" name="robo_hardware" output="screen">
 		<remap from="/mobile/mobile_base_controller/cmd_vel" to="/cmd_vel"/>
 	</node>
 
+	<rosparam file="$(find mobile)/config/controller.yaml" command="load"/>
     <node pkg="controller_manager" type="spawner" name="controller_manager" output="screen" 
           args="
                 /mobile/mobile_base_controller
                 /mobile/joints_update">
     </node>
 
-    <!--<node pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py" name="teleop_twist_keyboard">
-    </node>-->
+	<include file="$(find mobile)/launch/robo_viz.launch"/>
+	<include file="$(find mobile)/launch/robo_rplidar.launch" />
+	<include file="$(find mobile)/launch/robo_imu.launch" />
+	<include file="$(find mobile)/launch/robo_matcher.launch" />
+
+	<node pkg="robot_localization" type="ekf_localization_node" name="ekf_localization_node">
+		<rosparam file="$(find mobile)/config/ekf_localization_params.yaml" command="load"/>
+	</node>
 </launch>

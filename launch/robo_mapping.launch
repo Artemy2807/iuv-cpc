@@ -1,8 +1,6 @@
 <?xml version="1.0"?>
 <launch>
-
 	<include file="$(find mobile)/launch/robo_move.launch"/>
-	<include file="$(find mobile)/launch/robo_rplidar.launch"/>
 	<include file="$(find mobile)/launch/robo_slam.launch"/>
 </launch>
 
