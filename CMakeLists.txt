@@ -18,6 +18,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
+find_library(RTIMULib libRTIMULib.so)
+
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -140,6 +142,8 @@ include_directories(
 
  add_executable(teleop_node src/mobile-teleop.cpp)
 
+ add_executable(i2c_imu src/i2c_imu_node.cpp)
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -156,6 +160,11 @@ include_directories(
  )
  
  target_link_libraries(teleop_node
+   ${catkin_LIBRARIES}
+ )
+
+ target_link_libraries(i2c_imu
+	 RTIMULib
    ${catkin_LIBRARIES}
  )
 
