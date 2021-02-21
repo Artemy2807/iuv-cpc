@@ -11,15 +11,15 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
-	controller_manager
-	tf
+  controller_manager
+  tf
 )
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
 find_library(RTIMULib libRTIMULib.so)
-
+find_package(OpenCV)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -122,7 +122,8 @@ catkin_package(
 include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
-	include/mobile
+  ${OpenCV_INCLUDES}
+  include/mobile
 )
 
 ## Declare a C++ library
@@ -143,6 +144,8 @@ include_directories(
  add_executable(teleop_node src/mobile-teleop.cpp)
 
  add_executable(i2c_imu src/i2c_imu_node.cpp)
+
+ add_executable(detect_node src/detect_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -166,6 +169,11 @@ include_directories(
  target_link_libraries(i2c_imu
 	 RTIMULib
    ${catkin_LIBRARIES}
+ )
+
+ target_link_libraries(detect_node
+   ${catkin_LIBRARIES}
+   ${OpenCV_LIBS}
  )
 
 #############
