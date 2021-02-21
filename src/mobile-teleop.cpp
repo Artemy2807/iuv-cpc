@@ -1,4 +1,5 @@
 #include <geometry_msgs/Twist.h>
+#include <angles/angles.h>
 #include <ros/ros.h>
 #include <termios.h>
 #include <iostream>
@@ -16,28 +17,28 @@ struct MobileParam {
     }
 };
 
-void help_param(char* name) {
+void help_param() {
 	std::cout << "Use: \n" 
-			  << "	" << name << " <ros remapping arguments> <wheelbase> <max backward speed> <max forward speed> <steering range>\n"
+			  << "  rosrun mobile teleop_node <ros remapping arguments> <wheelbase> <max backward speed> <max forward speed> <steering ranges>\n"
 			  << "Options: \n"
-			  << "	<wheelbase>				  --		wheelbase in m (default: 1.0 m)\n"
-			  << "	<max backward speed> 	  --		max backward speed in m/s (default: 0.5 m/s)\n"
-			  << "										if set to a negative value, then it will become 0.0 m/s\n"
-			  << "	<max forward speed>		  --		max forward speed in m/s (default: 1.0 m/s)\n"
-			  << "										if set to a negative value, then it will become 0.0 m/s\n"
-			  << "	<steering range>					steering range in degrees (default: 30 degrees)\n"
-			  << "							  --		if set to a negative value, then it will become 0.0 m/s\n"
-			  << "										minimum border calculate: 0 - <steering range>\n"
-			  << "										maximum border calculate: 0 + <steering range>\n"
+			  << "  <max backward speed>  --  max backward speed in m/s (default: 0.5 m/s)\n"
+			  << "                            if set to a negative value, then it will become abs(speed) m/s\n"
+			  << "  <max forward speed>   --  max forward speed in m/s (default: 1.0 m/s)\n"
+			  << "                            if set to a negative value, then it will become abs(speed) m/s\n"
+			  << "  <steering range>      --  steering range in degrees (default: 30 degrees)\n"
+			  << "                            if set to a negative value, then it will become abs(range) degrees\n"
+			  << "                            minimum border calculate: 0 - <steering range>\n"
+			  << "                            maximum border calculate: 0 + <steering range>\n";
 }
 
 void help() {
-    std::cout << "Control Your mobile!\n"
-            << "------------------------------\n"
-            << "space key, k: force stop\n"
-            << "w/s: shift the middle pos of throttle by +/- 0.05 m/s\n"
-            << "a/d: shift the middle pos of steering by +/- 1 degree\n"
-            << "Ctrl+C to quit\n";
+    std::cout << "\n\n------------------------------\n"
+			  << "Control Your mobile!\n"
+              << "------------------------------\n"
+              << "space key, k: force stop\n"
+              << "w/s: shift the middle pos of throttle by +/- 0.05 m/s\n"
+              << "a/d: shift the middle pos of steering by +/- 1 degree\n"
+              << "Ctrl+C to quit\n";
 }
 
 void constrain(float& x, float min, float max) {
@@ -47,7 +48,7 @@ void constrain(float& x, float min, float max) {
 bool is_readable() {
     struct timeval tv;
     fd_set fds;
-    tv.tv_sec = 0;
+    tv.tv_sec = 0; 
     tv.tv_usec = 0;
     FD_ZERO(&fds);
     FD_SET(0, &fds);
@@ -91,13 +92,17 @@ int main(int argc, char** argv) {
     newt.c_lflag &= ~(ECHO|ECHONL|ICANON|ISIG|IEXTEN);
     tcsetattr(0, TCSANOW, &newt);
 
-    help_param(argv[0]);
-    help();
+    help_param();
+    float max_backward_speed = (argc - 2 > 1 ? abs(std::atof(argv[2])) : 0.5),
+    	  max_forward_speed = (argc - 3 > 1 ? abs(std::atof(argv[3])) : 1.0),
+    	  steering_range = (argc - 4 > 1 ? abs(std::atof(argv[4])) : 30.0);
 
-    float wheelbase = (argc - 1 > 1 ? argv[1] ? 1.0);
-    	  max_backward_speed = (argc - 2 > 1 ? argv[2] ? 0.5),
-    	  max_forward_speed = (argc - 3 > 1 ? argv[3] ? 1.0),
-    	  steering_range = (argc - 4 > 1 ? argv[4] ? 30.0);
+	std::cout << "Parameters:\n"
+			  << "  max_backward_speed: " << max_backward_speed << "\n"
+			  << "  max_forward_speed: " << max_forward_speed << "\n"
+			  << "  steering_range: " << steering_range << "\n";
+
+    help();
     
     while(ros::ok() && !end) {
         if(is_readable()) {
@@ -133,7 +138,7 @@ int main(int argc, char** argv) {
         	constrain(param_control.turn, 0.0 - steering_range, 0.0 + steering_range);
 
         	param_twist.speed = param_control.speed;
-        	param_twist.turn = param_twist.speed / (wheelbase / std::tan(param_control.turn));
+			param_twist.turn = angles::from_degrees(param_control.turn);
         }
 
     	geometry_msgs::Twist cmd;

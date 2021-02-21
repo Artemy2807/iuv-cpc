@@ -121,13 +121,13 @@ void Hardware::update(const ros::TimerEvent& e) {
 
 void Hardware::read() {
 	// Считывание количества градусов, которое проехала модель
-	int16_t data;
-	i2c_device.read((void*)&data, 2);
+	int32_t data;
+	i2c_device.read((void*)&data, 4);
 
 	// Преобразование градусов в радианы
 	wheel_radians += angles::from_degrees((double)data);
 	joint_position[0] = wheel_radians;
-	joint_position[1] = angles::from_degrees(position_prev);
+	//joint_position[1] = angles::from_degrees(position_prev);
 	ROS_INFO("Joint command velocity: %f", angles::to_degrees(joint_position[0]));
 }
 
@@ -144,7 +144,7 @@ void Hardware::write() {
 
 	ros::Time time_current = ros::Time::now();
 	
-	if((velocity_prev != velocity) || (position_prev != position) || (time_current - time_prev).toSec() > 1.5) {
+	if((velocity_prev != velocity) || (position_prev != position) || (time_current - time_prev).toSec() > 0.5) {
 		// Создание отправляемых данных
 		// Все данные записываются в wbuf:
 		// [1-2 байты] - сколько градусов необходимо проехать (выделяется 2 байта,
@@ -152,7 +152,7 @@ void Hardware::write() {
 		// [3 байт] - угол поворота передних колёс
 		uint8_t wbuf[3];
 		std::memcpy(&wbuf[0], &velocity, 2);
-		wbuf[2] = 90 + (int)((float)position * (float)1.5);
+		wbuf[2] = 90 + ((int)position * 2);
 
 		// Отправление данных на arduino
 		i2c_device.write((void*)&wbuf, 3);
