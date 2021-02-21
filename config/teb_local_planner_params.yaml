@@ -1,6 +1,6 @@
 TebLocalPlannerROS:
 
-    odom_topic: odom
+    odom_topic: odometry/filtered
     
     # Траектория
     teb_autosize: True
@@ -18,28 +18,28 @@ TebLocalPlannerROS:
     
     # Параметры робота
     # Максимальная скорость движения м/с
-    max_vel_x: 2.00
+    max_vel_x: 0.35
     # Максимальная абсолютная поступательная скорость робота при движении назад в м/с
-    max_vel_x_backwards: 1.50
+    max_vel_x_backwards: 0.2
     # Предел ускорения робота м/с^2
-    acc_lim_x: 0.01
+    acc_lim_x: 0.5
     # ВНИМАНИЕ: Эти параметры не нужны для carlike робота
     max_vel_y: 0.0
     # Максимальная угловая скорость радианы/с
-    max_vel_theta: 0.8
+    max_vel_theta: 0.3
     # Предел ускорения вращения робота радианы/с^2
-    acc_lim_theta: 0.2
+    acc_lim_theta: 0.5
     
     # ********************** Параметры carlike робота ********************
-    min_turning_radius: 0.5         # Минимальный радиус поворота робота
-    wheelbase: 0.33                 # Длина колесной базы
-    cmd_angle_instead_rotvel: False # Заменить скорость вращения в сообщении о заданной скорости на соответствующий угол поворота
+    min_turning_radius: 0.588         # Минимальный радиус поворота робота
+    wheelbase: 0.326                 # Длина колесной базы
+    cmd_angle_instead_rotvel: True # Заменить скорость вращения в сообщении о заданной скорости на соответствующий угол поворота
     # ********************************************************************
 
     footprint_model: # types: "point", "circular", "two_circles", "line", "polygon"
         type: "line"
         line_start: [0.0, 0.0]
-        line_end: [0.33, 0.0]
+        line_end: [0.326, 0.0]
 
     # Параметры допуска цели
     xy_goal_tolerance: 0.2
@@ -47,8 +47,8 @@ TebLocalPlannerROS:
     free_goal_vel: False
     complete_global_plan: True
 
-    min_obstacle_dist: 0.18
-    inflation_dist: 0.6
+    min_obstacle_dist: 0.27
+    inflation_dist: 0.60
     include_costmap_obstacles: True
     costmap_obstacles_behind_robot_dist: 1.0
     obstacle_poses_affected: 15
@@ -69,10 +69,10 @@ TebLocalPlannerROS:
     obstacle_cost_exponent: 4
     weight_max_vel_x: 2
     weight_max_vel_theta: 1
-    weight_acc_lim_x: 1
+    weight_acc_lim_x: 0
     weight_acc_lim_theta: 1
     weight_kinematics_nh: 1000
-    weight_kinematics_forward_drive: 1
+    weight_kinematics_forward_drive: 1000
     weight_kinematics_turning_radius: 1
     weight_optimaltime: 1 # must be > 0
     weight_shortest_path: 0
@@ -84,9 +84,9 @@ TebLocalPlannerROS:
     weight_adapt_factor: 2
 
     # Параллельное планирование в различных топологиях
-    enable_homotopy_class_planning: True
-    enable_multithreading: True
-    max_number_classes: 4
+    enable_homotopy_class_planning: False # True
+    enable_multithreading: False # True
+    max_number_classes: 1 # 4
     selection_cost_hysteresis: 1.0
     selection_prefer_initial_plan: 0.95
     selection_obst_cost_scale: 1.0

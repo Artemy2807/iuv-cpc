@@ -17,10 +17,12 @@ mobile:
         # Диагональ ковариационной матрицы для публикации одометрии твист
         twist_covariance_diagonal: [0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1000.0]
 
+        enable_odom_tf: false
+
         # Расстояние между задним и передним колесом
-        wheel_separation_h: 0.323
+        wheel_separation_h: 0.326
         # Радиус колес
-        wheel_radius: 0.055
+        wheel_radius: 0.0525
 
         # Множитель, применяемый к параметру расстояния между колесами
         wheel_separation_h_multiplier: 1.0
@@ -42,13 +44,13 @@ mobile:
         linear:
             x:
                 # Должен ли контроллер ограничивать линейную скорость или нет
-                has_velocity_limits: true
+                has_velocity_limits: false
                 # Максимальная/минимальная линейная скорость
                 max_velocity: 1.0
                 # Установка этого значения на 0.0 отключит движение назад
                 min_velocity: -0.5
                 # Должен ли контроллер ограничивать линейное ускорение или нет
-                has_acceleration_limits: true
+                has_acceleration_limits: false
                 # Максимальное/минимальное линейное ускорение
                 max_acceleration: 0.8
                 min_acceleration: -0.4
@@ -59,7 +61,7 @@ mobile:
         angular:
             z:
                 # Должен ли контроллер ограничивать угловую скорость или нет
-                has_velocity_limits: true
+                has_velocity_limits: false
                 # Максимальная/минимальная угловая скорость
                 max_velocity: 1.7
                 # Установка этого значения на 0.0 отключит вращение против часовой стрелки
