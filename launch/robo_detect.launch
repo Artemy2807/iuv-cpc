@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+	<arg name="models_arg" default="[$(find mobile)/models/stop.xml, $(find mobile)/models/pedestrian.xml]"/>
+	<node pkg="mobile" type="detect_node" name="detect_node">
+		<rosparam param="signs_model" subst_value="True">$(arg models_arg)</rosparam>
+	</node>
+</launch>
