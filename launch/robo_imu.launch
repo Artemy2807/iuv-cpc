@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+	<node pkg="mobile" type="i2c_imu" name="i2c_imu" output="screen" >
+		<rosparam file="$(find mobile)/config/i2c_imu_params.yaml"/>	
+		<param name="publish_magnetometer" value="true" />
+	</node>
+</launch>
