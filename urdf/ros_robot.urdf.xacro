@@ -33,24 +33,11 @@
 	</link>
 
 	<joint name="base_to_laser" type="fixed">
-		<origin xyz="0.1 0 0"/>
+		<origin xyz="0.123 0 0"/>
 		<parent link="base_link"/>
 		<child link="laser"/>
 	</joint>
 	<link name="laser">
-		<visual>
-			<origin rpy="1.5708 0 0" xyz="0.10 0.13 -0.545"/>
-			<geometry>
-				<mesh filename="package://mobile/car_parts/rviz/rplidar-a1.stl" scale="0.001 0.001 0.001"/>
-			</geometry>
-			<material name="black"/>
-		</visual>
-		<collision>
-			<origin rpy="1.5708 0 0" xyz="0.10 0.13 -0.545"/>
-			<geometry>
-				<mesh filename="package://mobile/car_parts/rviz/rplidar-a1.stl" scale="0.001 0.001 0.001"/>
-			</geometry>
-		</collision>
 	</link>
 
 	<joint name="base_to_camera" type="fixed">
@@ -73,11 +60,19 @@
 			</geometry>
 		</collision>
 	</link>
+
+	<joint name="base_to_imu" type="fixed">
+		<origin rpy="0 0 0" xyz="0.307 0 0.12"/>
+		<parent link="base_link"/>
+		<child link="imu_link"/>
+	</joint>
+	<link name="imu_link">
+	</link>
 	
 	<joint name="front_steer_joint" type="revolute">
 		<limit effort="100" lower="-1" upper="1" velocity="10"/>
 		<axis xyz="0 0 -1"/>
-		<origin xyz="0.33 0 0.052"/>
+		<origin xyz="0.326 0 0.052"/>
 		<parent link="base_link"/>
 		<child link="front_steer"/>
 	</joint>	
@@ -87,7 +82,7 @@
 	<joint name="front_left_wheel_revolute_joint" type="revolute">
 		<limit effort="100" lower="-1" upper="1" velocity="10"/>		
 		<axis xyz="0 0 1"/>
-		<origin rpy="0 0 0" xyz="0.33 0.115 0.052"/>
+		<origin rpy="0 0 0" xyz="0.326 0.115 0.052"/>
 		<mimic joint="front_steer_joint" multiplier="1.0"/>
 		<parent link="base_link"/>
 		<child link="front_left_wheel_revolute"/>	
@@ -106,19 +101,19 @@
 	<link name="top_left_wheel">
 		<visual>
 			<origin rpy="-1.5708 0 0"/>
-			<wheel/>
+			<xacro:wheel/>
 			<material name="gray"/>
 		</visual>
 		<collision>
 			<origin rpy="-1.5708 0 0"/>
-			<wheel/>
+			<xacro:wheel/>
 		</collision>
 	</link>
 
 	<joint name="front_right_wheel_revolute_joint" type="revolute">
 		<limit effort="100" lower="-1" upper="1" velocity="10"/>		
 		<axis xyz="0 0 1"/>
-		<origin rpy="0 0 0" xyz="0.33 -0.115 0.052"/>
+		<origin rpy="0 0 0" xyz="0.326 -0.115 0.052"/>
 		<mimic joint="front_steer_joint" multiplier="1.0"/>
 		<parent link="base_link"/>
 		<child link="front_right_wheel_revolute"/>	
@@ -136,12 +131,12 @@
 	<link name="top_right_wheel">
 		<visual>
 			<origin rpy="1.5708 3.14 0"/>
-			<wheel/>
+			<xacro:wheel/>
 			<material name="gray"/>
 		</visual>
 		<collision>
 			<origin rpy="1.5708 3.14 0"/>
-			<wheel/>
+			<xacro:wheel/>
 		</collision>
 	</link>
 
@@ -163,11 +158,11 @@
 	</joint>
 	<link name="bottom_left_wheel">
 		<visual>
-			<wheel/>
+			<xacro:wheel/>
 			<material name="gray"/>
 		</visual>
 		<collision>
-			<wheel/>
+			<xacro:wheel/>
 		</collision>
 	</link>
 
@@ -180,11 +175,11 @@
 	</joint>
 	<link name="bottom_right_wheel">
 		<visual>
-			<wheel/>
+			<xacro:wheel/>
 			<material name="gray"/>
 		</visual>
 		<collision>
-			<wheel/>
+			<xacro:wheel/>
 		</collision>
 	</link>
 </robot>
